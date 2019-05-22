@@ -45,6 +45,7 @@ main ( int argc, char *argv[] ) {
 		
 		/*-------------------------------------------------------*  
 		 * Realizar fork del proceso para atender una petición 
+		 * MODIFICAR PARA RECIBIR SEGUN EL COMANDO QUE LLEGUE
 		 *-------------------------------------------------------*/
 		if ( ( pid_hijo = fork() ) < 0 ) {
 			perror("ERROR FORK:");
@@ -57,11 +58,13 @@ main ( int argc, char *argv[] ) {
 		
 				/*-------------------------------------------------------* 
 		 	 	 * Realizar la tarea específica del servicio
+				 * MODIFICAR PARA PROCESAR SEGUN EL COMANDO QUE LLEGUE
 		 	 	 *-------------------------------------------------------*/
 				procesar( msg );
 	
 				/*-------------------------------------------------------* 
-	 			 * Responder petición		      					
+	 			 * Responder petición	
+				 * MODIFICAR ENVIAR PARA RESPONDER SEGUN EL COMANDO QUE LLEGUE	      					
 				 *-------------------------------------------------------*/
 				if ( ( total = enviar( ndescriptor, msg ) ) < 0 ) { 
 					perror("ERROR ENVIAR: ");
@@ -128,6 +131,7 @@ int esperar( int sockfd ) {
 /*-------------------------------------------------------------------------*
  * enviar() - enviar la respuesta al cliente 
  * retornar la longitud de la cadena enviada
+ * MODIFICAR ENVIAR PARA RESPONDER SEGUN EL COMANDO EJECUTADO
  *-------------------------------------------------------------------------*/ 	    
 int enviar( int nsockfd, char *msg ) {
 	int longitud;
@@ -143,6 +147,7 @@ int enviar( int nsockfd, char *msg ) {
 /*------------------------------------------------------------------------*
  * recibir() - recibir una petición
  * retornar la longitud de la cadena leída
+ * MODIFICAR RECIBIR PARA RECIBIR UN NUEVO COMANDO
  *------------------------------------------------------------------------*/ 	    
 int recibir( int nsockfd, char *msg ) {
 	int longitud;
@@ -154,11 +159,21 @@ int recibir( int nsockfd, char *msg ) {
 		return ( -2 );
 	}
 
+	/*---------------------------------------------------------------------*
+	 * Verificar los argumentos
+	 *---------------------------------------------------------------------*/
+	
+ 	if ( argc < 2 ) {
+		printf( "Uso: servidor <puerto>\n" );
+		exit( -1 );
+	}
+
 	return ( longitud );
 }
 
 /*-----------------------------------------------------------------------* 
  * procesar() - atender una petición
+ * MODIFICAR PARA PROCESAR LA ACCION CORRESPONDIENTE A UN COMANDO
  *-----------------------------------------------------------------------*/
 void procesar( char *mensaje ) {
 	printf ( "(%5d) Procesando: %s \n", getpid(), mensaje );
