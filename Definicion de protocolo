@@ -1,0 +1,60 @@
+Servicios provistos por el servidor:
+
+	- Recibir comandos para encender o apagar las luces
+		(Tiene configuración)
+		Identificador: switchLights
+		Parámetros: switch Booleano
+		Retorna: mensaje String
+
+	- Recibir comandos para activar o desactivar el riego automático
+		(Tiene configuración)
+		Identificador: switchHoses
+		Parámetros: switch Booleano
+		Retorna: mensaje String
+
+	- Enviar un aviso si alguien llama al portero eléctrico
+		Identificador: notify
+		Parámetros:
+		Retorna: aviso String
+
+	- Enviar una imagen si alguien llama al portero eléctrico
+		(Establece conexión)
+		Identificador: sendImage
+		Parámetros:
+		Retorna: imagen Binarie
+
+	- Recibir y enviar audio para contestar el portero eléctrico
+		(Establece conexión, stream)
+		Identificador: startCall
+		Parámetros: audio Stream, sending Boolean
+		Retorna: audio Stream
+
+
+Servicios provistos por el cliente:
+	
+	- Enviar comandos para encender o apagar las luces
+		Identificador: switchLights
+		Parámetros: activar Boolean
+		Retorna: activar Boolean
+	
+	- Enviar comandos para activar o desactivar el riego automático
+		Identificador: switchHoses
+		Parámetros: activar Boolean
+		Retorna: activar Boolean
+	
+	- Recibir un mensaje si alguien llama al portero eléctrico
+		Identificador: newMessage
+		Parámetros: mensaje String
+		Retorna:
+	
+	- Solicitar una imágen del área cercana al portero eléctrico
+		Identificador: getImage
+		Parámetros:
+		Retorna: solicitud String
+	
+	- Contestar una llamada al portero eléctrico
+		(Establece conexión, stream)
+		Identificador: replyCall
+		Parámetros:
+		Retorna: conectado Booleano
+
