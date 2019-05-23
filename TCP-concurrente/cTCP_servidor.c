@@ -3,6 +3,7 @@
  */
 
 #include "cTCP_servidor.h"
+#include <string.h>	
 
 main ( int argc, char *argv[] ) {
 	char *msg;
@@ -159,14 +160,29 @@ int recibir( int nsockfd, char *msg ) {
 		return ( -2 );
 	}
 
+	//char str[80] = "This is - www.tutorialspoint.com - website";
+   	const char s[2] = " ";
+   	char *token;
+   
+   	/* get the first token */
+ 	token = strtok(msg, s);
+   
+   	/* walk through other tokens */
+ 	while( token != NULL ) {
+		printf( " %s\n", token );
+		token = strtok(NULL, s);
+   }
+   
+   //return(0);
+
 	/*---------------------------------------------------------------------*
 	 * Verificar los argumentos
 	 *---------------------------------------------------------------------*/
 	
- 	if ( argc < 2 ) {
+ /* 	if ( argc < 2 ) {
 		printf( "Uso: servidor <puerto>\n" );
 		exit( -1 );
-	}
+	} */
 
 	return ( longitud );
 }
