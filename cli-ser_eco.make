@@ -26,7 +26,7 @@ VIA_SRV_3 = Test-combinado
 
 OBJS_SRV_1 = $(VIA_SRV_1)/iUDP_servidor.o 
 OBJS_SRV_2 = $(VIA_SRV_2)/cTCP_servidor.o 
-OBJS_SRV_3 = $(VIA_SRV_3)/servidor_combinado.o
+OBJS_SRV_3 = $(VIA_SRV_3)/Test_servidor.o
 
 # ubicación clientes
 VIA_CLI_1 = UDP-iterativo
@@ -39,7 +39,7 @@ OBJS_CLI_2 = $(VIA_CLI_2)/iTCP_cliente.o
 ejemplo-cli-ser-eco: $(OBJS_SRV_1) $(OBJS_SRV_2) $(OBJS_SRV_3) $(OBJS_CLI_1) $(OBJS_CLI_2)
 	cc $(OBJS_SRV_1) -o $(VIA_SRV_1)/servidor_udp
 	cc $(OBJS_SRV_2) -o $(VIA_SRV_2)/servidor_tcp
-	cc $(OBJS_SRV_3) -o $(VIA_SRV_3)/Test_combinado
+	cc $(OBJS_SRV_3) -o $(VIA_SRV_3)/Test_servidor
 	cc $(OBJS_CLI_1) -o $(VIA_CLI_1)/cliente_udp
 	cc $(OBJS_CLI_2) -o $(VIA_CLI_2)/cliente_tcp
 	
@@ -52,7 +52,7 @@ servidor_tcp.o:	$(VIA_SRV_2)/cTCP_servidor.c $(VIA_SRV_2)/cTCP_servidor.h $(VIA_
 	cc -c $(VIA_SRV_2)/cTCP_servidor.c
 
 # 3.- Servidor combinado de prueba
-servidor_combinado.o:	$(VIA_SRV_3)/Test_servidor.c $(VIA_SRV_3)/cTCP_servidor.h $(VIA_SRV_3)/iUDP_servidor.h $(VIA_SRV_3)/eco.h
+Test_servidor.o:	$(VIA_SRV_3)/Test_servidor.c $(VIA_SRV_3)/cTCP_servidor.h $(VIA_SRV_3)/iUDP_servidor.h $(VIA_SRV_3)/eco.h
 	cc -c $(VIA_SRV_3)/Test_servidor.c
 
 # 1.- Cliente de eco iterativo sobre UDP
