@@ -8,6 +8,7 @@
 main ( int argc, char *argv[] ) {
 	char *msg;
 	int descriptor, ndescriptor, total, pid_hijo;
+	char *arreglo[];
 	
 	/*---------------------------------------------------------------------*
 	 * Verificar los argumentos
@@ -28,7 +29,7 @@ main ( int argc, char *argv[] ) {
 		exit(-1);
 	}	
 	printf( "Servidor inicializado.\n" );
-
+	
 	msg = (char*)malloc( sizeof( MAXLINEA + 1 ) );
 
 	/*
