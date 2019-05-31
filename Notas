@@ -1,0 +1,3 @@
+Entre la creacion del socket y antes de hacer el bind
+del lado de servidor:
+	setsockopt(sock, sol_socket, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))
