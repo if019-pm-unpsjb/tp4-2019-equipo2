@@ -5,6 +5,14 @@ Servicios provistos por el servidor:
 		Identificador: switchLights
 		Parámetros: switch Booleano
 		Retorna: mensaje String
+	
+	boolean lightStatus;
+
+	switchLights(boolean turnLights){
+		// Recibe orden de prender o encender las luces
+		// Reacciona segun el estado actual de las luces
+	}
+
 
 	- Recibir comandos para activar o desactivar el riego automático
 		(Tiene configuración)
@@ -12,10 +20,22 @@ Servicios provistos por el servidor:
 		Parámetros: switch Booleano
 		Retorna: mensaje String
 
+	boolean hosesStatus;
+
+	switchHoses(boolean turnHoses){
+		// Recibe orden de prender o encender las luces
+		// Reacciona segun el estado actual de las luces
+	}
+
+
 	- Enviar un aviso si alguien llama al portero eléctrico
 		Identificador: notify
 		Parámetros:
 		Retorna: aviso String
+	
+	notifyCall(){
+		// Le avisa al cliente que alguien esta llamando
+	}
 
 	- Enviar una imagen si alguien llama al portero eléctrico
 		(Establece conexión)
