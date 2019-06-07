@@ -7,5 +7,5 @@
 #include <stdlib.h>
 #include "eco.h"
 
-void procesar( int descriptor, struct sockaddr *dir_cli_p, socklen_t longcli );
+void procesar_udp( int descriptor, struct sockaddr *dir_cli_p, socklen_t longcli );
 
