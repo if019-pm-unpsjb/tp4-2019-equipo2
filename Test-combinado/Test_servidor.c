@@ -17,34 +17,64 @@
 #define handle_error(msg) \
 		do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
-struct thread_info {    /* Used as argument to thread_start() */
-	pthread_t thread_id;        /* ID returned by pthread_create() */
-	int       thread_num;       /* Application-defined thread # */
-	char     *argv_string;      /* From command-line argument */
+struct thread_args {	/* Structure for thread arguments */
+       int    sock_tcp;
+	   int    sock_udp;
+       struct sockaddr_in dir_srv;
 };
 
-struct thread_args {	/* Structure for thread arguments */
-       int    sock;
-       struct sockaddr_in dir_srv;
+struct thread_udp_args {	/* Structure for udp thread arguments */
+       int    ndescriptor;
+	   int    recibido;
+       struct sockaddr_in dir_cli;
+	   char msg;
+	   socklen_t longitud;
 };
 
 /* Thread start function: display address near top of our stack,
 	and return upper-cased copy of argv_string */
 
 static void *
-udp_sub_thread(void *arg)
+udp_sub_thread(void *_args)
 {
-	// Thread encargado de resolver una solicitud UDP
+	// Thread encargado de resolver una solicitud UDPint recibido;
+	struct thread_udp_args *args = (struct thread_udp_args *) _args;
+	printf("por algun motivo llegué acá con recibido %d \n", args->recibido);
+	//procesar(msg);
+	sendto( args->ndescriptor, args->msg, args->recibido, 0, &args->dir_cli, args->longitud );
+	printf("por algun motivo llegué acá tambien pero con msg %s \n", args->msg);
 
-	return 1;
+	pthread_exit(NULL);
 }
 
 static void *
-udp_thread_start(void *arg)
+udp_thread_start(void *_args)
 {
-	struct thread_info *tinfo = arg;
-	char *uargv, *p;
+	struct thread_args *args = (struct thread_args *) _args;
+	struct thread_udp_args *udpargs = malloc (sizeof (struct thread_udp_args));
+	struct sockaddr_in dir_cli;
+	socklen_t longitud;
+	int recibido, s;
+	char msg[ MAXLINEA ];
 
+	printf( "Servidor UDP inicializado.\n" );
+
+	for(;;) {
+		longitud = sizeof( dir_cli );
+		recibido = recvfrom( args->sock_udp, msg, MAXLINEA, 0, &dir_cli, &longitud );
+
+		udpargs->ndescriptor = args->sock_udp;
+		udpargs->recibido = recibido;
+		udpargs->msg = msg;
+		udpargs->dir_cli = dir_cli;
+		udpargs->longitud = longitud;
+
+		pthread_t id;
+		s = pthread_create(&id, NULL,
+							udp_sub_thread, udpargs);
+		if (s != 0)
+			handle_error_en(s, "pthread_create");
+	}
 	// For de threads para escuchar por udp
 
 	// printf("Thread %d: top of stack near %p; argv_string=%s\n",
@@ -57,7 +87,7 @@ udp_thread_start(void *arg)
 	// for (p = uargv; *p != '\0'; p++)
 	// 	*p = toupper(*p);
 
-	return uargv;
+	pthread_exit(NULL);
 }
 
 static void *
@@ -66,8 +96,6 @@ tcp_sub_thread(void *arg)
 	int ndescriptor = (int) arg;
 	char *msg;
 	int total;
-
-	printf("me activaron con ndescriptor %d \n\n", ndescriptor);
 
 	// Thread encargado de resolver una solicitud TCP
 	printf( "(%5d) Atendiendo petición.\n", getpid() );
@@ -100,7 +128,7 @@ tcp_sub_thread(void *arg)
 	close( ndescriptor );
 	printf("(%5d) Conexión cerrada.\n", getpid() );
 
-	return ndescriptor;
+	pthread_exit(NULL);
 }
 
 static void *
@@ -108,7 +136,7 @@ tcp_thread_start(void *_args)
 {
 	struct thread_args *args = (struct thread_args *) _args;
 	char *msg;
-	int descriptor = args->sock;
+	int descriptor = args->sock_tcp;
 	int ndescriptor, s;
 
 	printf("me iniciaron con sock %d", descriptor);
@@ -132,7 +160,7 @@ tcp_thread_start(void *_args)
 	 	 * Esperar una petición
 	 	 *----------------------------------------------------------------*/
 		printf( "Esperando petición (Padre).\n" );
-		if ( ( ndescriptor = esperar( args->sock ) ) < 0 ) {
+		if ( ( ndescriptor = esperar( args->sock_tcp ) ) < 0 ) {
 			perror("ERROR ESPERANDO: ");
 			exit(-1);
 		}
@@ -153,7 +181,7 @@ tcp_thread_start(void *_args)
 
 	printf("termine con descriptor %d\n\n", descriptor);
 
-	return descriptor;
+	pthread_exit(NULL);
 }
 
 main ( int argc, char *argv[] ) {
@@ -190,9 +218,7 @@ int inicializar( int puerto ) {
 	// int opt = 1;
 	struct sockaddr_in dir_srv;
 	int s, tnum, opt, num_threads;
-	struct thread_info *tinfo;
-	struct thread_args *tudpargs = malloc (sizeof (struct thread_args));
-	struct thread_args *ttcpargs = malloc (sizeof (struct thread_args));
+	struct thread_args *targs = malloc (sizeof (struct thread_args));
 	pthread_attr_t attr;
 	int stack_size;
 	void *res;
@@ -204,10 +230,10 @@ int inicializar( int puerto ) {
 		return ( -1 );
 	
 	/* bind de la dirección local */
-	bzero( (char *) &ttcpargs->dir_srv, sizeof( struct sockaddr_in ) );
-	ttcpargs->dir_srv.sin_family = AF_INET;	/* utilizará familia de protocolos de Internet */
-	ttcpargs->dir_srv.sin_addr.s_addr = htonl( INADDR_ANY );		/* sobre la dirección IP local */
-	ttcpargs->dir_srv.sin_port = htons( puerto );
+	bzero( (char *) &targs->dir_srv, sizeof( struct sockaddr_in ) );
+	targs->dir_srv.sin_family = AF_INET;	/* utilizará familia de protocolos de Internet */
+	targs->dir_srv.sin_addr.s_addr = htonl( INADDR_ANY );		/* sobre la dirección IP local */
+	targs->dir_srv.sin_port = htons( puerto );
 
 	if ( setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) )
 		return ( -2 );
@@ -215,30 +241,30 @@ int inicializar( int puerto ) {
 	if ( setsockopt(lsock_udp, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) )
 		return ( -2 );
 
-	if ( bind( lsock, (struct sockaddr *) &ttcpargs->dir_srv, sizeof( struct sockaddr_in ) ) < 0 )
+	if ( bind( lsock, (struct sockaddr *) &targs->dir_srv, sizeof( struct sockaddr_in ) ) < 0 )
 		return ( -2 );
 
-	if ( bind( lsock_udp, (struct sockaddr *) &ttcpargs->dir_srv, sizeof( struct sockaddr_in ) ) < 0 )
+	if ( bind( lsock_udp, (struct sockaddr *) &targs->dir_srv, sizeof( struct sockaddr_in ) ) < 0 )
 		return ( -2 );
 	
+	targs->sock_tcp=lsock;
+	targs->sock_udp=lsock_udp;
 	/* Initialize thread creation attributes */
 	// pthread_attr_init(&attr);
 	// if (s != 0)
 	// 	handle_error_en(s, "pthread_attr_init");
 
-	//tudpargs->sock=lsock_udp;
-	//tudpargs->dir_srv=dir_srv;
-	// Implementar un thread con un for que espere conexiones UTP y les asigne un tread
-	// s = pthread_create(NULL, &attr,
-	// 					udp_thread_start, tudpargs);
-	// if (s != 0)
-	// 	handle_error_en(s, "pthread_create");
+	//Implementar un thread con un for que espere conexiones UTP y les asigne un tread
+	pthread_t id_udp;
+	s = pthread_create(&id_udp, NULL,
+						udp_thread_start, targs);
+	if (s != 0)
+		handle_error_en(s, "pthread_create");
 
-	ttcpargs->sock=lsock;
 	// Implementar un thread con un for que espere conexiones UDP y les asigne un tread
-	pthread_t id;
-	s = pthread_create(&id, NULL,
-						tcp_thread_start, ttcpargs);
+	pthread_t id_tcp;
+	s = pthread_create(&id_tcp, NULL,
+						tcp_thread_start, targs);
 	if (s != 0)
 		handle_error_en(s, "pthread_create");
 
