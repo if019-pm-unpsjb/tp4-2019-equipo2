@@ -52,7 +52,7 @@ servidor.o:	$(VIA_SRV_2)/servidor.c $(VIA_SRV_2)/servidor.h $(VIA_SRV_2)/eco.h
 	cc -c $(VIA_SRV_2)/servidor.c
 
 # 3.- Servidor combinado de prueba
-Test_servidor.o:	$(VIA_SRV_3)/Test_servidor.c $(VIA_SRV_3)/cTCP_servidor.h $(VIA_SRV_3)/iUDP_servidor.h $(VIA_SRV_3)/eco.h
+Test_servidor.o:	$(VIA_SRV_3)/Test_servidor.c $(VIA_SRV_3)/cTCP_servidor.h $(VIA_SRV_3)/eco.h
 	cc -c $(VIA_SRV_3)/Test_servidor.c
 
 # 1.- Cliente de eco iterativo sobre UDP
