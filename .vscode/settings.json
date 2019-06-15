@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "ctcp_servidor.h": "c",
-        "iudp_servidor.h": "c",
-        "stdlib.h": "c"
-    }
-}
