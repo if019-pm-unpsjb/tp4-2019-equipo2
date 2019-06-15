@@ -1,4 +1,4 @@
-cTCP_servidor.o
-iTCP_cliente.o
-servidor_tcp
-cliente_tcp
+servidor.o
+cliente.o
+servidor
+cliente
