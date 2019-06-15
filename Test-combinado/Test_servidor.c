@@ -27,7 +27,7 @@ struct thread_udp_args {	/* Structure for udp thread arguments */
        int    ndescriptor;
 	   int    recibido;
        struct sockaddr_in dir_cli;
-	   char msg;
+	   char* msg;
 	   socklen_t longitud;
 };
 
@@ -35,20 +35,20 @@ struct thread_udp_args {	/* Structure for udp thread arguments */
 	and return upper-cased copy of argv_string */
 
 static void *
-udp_sub_thread(void *_args)
+udp_manager_thread(void *_args)
 {
 	// Thread encargado de resolver una solicitud UDPint recibido;
 	struct thread_udp_args *args = (struct thread_udp_args *) _args;
-	printf("por algun motivo llegué acá con recibido %d \n", args->recibido);
-	//procesar(msg);
+	printf( "[UDP](%d) Recibido: %s\n", args->dir_cli.sin_addr.s_addr, args->msg );
+	procesar(args->msg);
 	sendto( args->ndescriptor, args->msg, args->recibido, 0, &args->dir_cli, args->longitud );
-	printf("por algun motivo llegué acá tambien pero con msg %s \n", args->msg);
+		printf("[UDP](%d) Respuesta enviada: %s.\n", args->dir_cli.sin_addr.s_addr, args->msg );
 
 	pthread_exit(NULL);
 }
 
 static void *
-udp_thread_start(void *_args)
+udp_main_thread(void *_args)
 {
 	struct thread_args *args = (struct thread_args *) _args;
 	struct thread_udp_args *udpargs = malloc (sizeof (struct thread_udp_args));
@@ -56,22 +56,26 @@ udp_thread_start(void *_args)
 	socklen_t longitud;
 	int recibido, s;
 	char msg[ MAXLINEA ];
+	char* parsedMsg;
 
+	printf ( "\n\t [UDP] Escuchando en puerto: %d, dirección %d. \n", 
+			ntohs( args->dir_srv.sin_port ), ntohl( args->dir_srv.sin_addr.s_addr ));
 	printf( "Servidor UDP inicializado.\n" );
 
 	for(;;) {
 		longitud = sizeof( dir_cli );
 		recibido = recvfrom( args->sock_udp, msg, MAXLINEA, 0, &dir_cli, &longitud );
-
 		udpargs->ndescriptor = args->sock_udp;
 		udpargs->recibido = recibido;
+		msg[ recibido ] = '\0';
+		udpargs->msg = (char*)malloc( sizeof( MAXLINEA + 1 ) );
 		udpargs->msg = msg;
 		udpargs->dir_cli = dir_cli;
 		udpargs->longitud = longitud;
 
 		pthread_t id;
 		s = pthread_create(&id, NULL,
-							udp_sub_thread, udpargs);
+							udp_manager_thread, udpargs);
 		if (s != 0)
 			handle_error_en(s, "pthread_create");
 	}
@@ -91,19 +95,19 @@ udp_thread_start(void *_args)
 }
 
 static void *
-tcp_sub_thread(void *arg)
+tcp_manager_thread(void *arg)
 {
 	int ndescriptor = (int) arg;
 	char *msg;
 	int total;
 
 	// Thread encargado de resolver una solicitud TCP
-	printf( "(%5d) Atendiendo petición.\n", getpid() );
+	printf( "(TCP) Atendiendo petición.\n" );
 
 	msg = (char*)malloc( sizeof( MAXLINEA + 1 ) );
 			
 	while ( total = recibir( ndescriptor, msg ) > 0 ) {
-		printf( "(%5d) Recibido: %s\n", getpid(), msg );
+		printf( "[TCP](%d) Recibido: %s\n", ndescriptor, msg );
 
 		/*-------------------------------------------------------* 
 			* Realizar la tarea específica del servicio
@@ -119,7 +123,7 @@ tcp_sub_thread(void *arg)
 			perror("ERROR ENVIAR: ");
 			exit(-1);
 		}
-		printf("(%5d) Respuesta enviada: %s.\n", getpid(), msg );
+		printf("[TCP](%d) Respuesta enviada: %s.\n", ndescriptor, msg );
 	}
 	
 	/*-------------------------------------------------------* 
@@ -132,14 +136,12 @@ tcp_sub_thread(void *arg)
 }
 
 static void *
-tcp_thread_start(void *_args)
+tcp_main_thread(void *_args)
 {
 	struct thread_args *args = (struct thread_args *) _args;
 	char *msg;
 	int descriptor = args->sock_tcp;
 	int ndescriptor, s;
-
-	printf("me iniciaron con sock %d", descriptor);
 
 	/* armar una lista de espera para MAXCLI clientes */	
 	listen( descriptor, MAXCLI );
@@ -147,7 +149,7 @@ tcp_thread_start(void *_args)
 	/* mostrar un mensaje con los datos del socket de escucha.
 	 * Sólo para ver qué está haciendo. Esta función no debería mostrar salida por pantalla.
 	 */
-	printf ( "\n\tEscuchando en puerto: %d, dirección %d. \n\tPodría tener hasta %d clientes esperando.\n", 
+	printf ( "\n\t [TCP] Escuchando en puerto: %d, dirección %d. \n\tPodría tener hasta %d clientes esperando.\n", 
 	 	ntohs( args->dir_srv.sin_port ), ntohl( args->dir_srv.sin_addr.s_addr ), MAXCLI );
 		
 	printf( "Servidor TCP inicializado.\n" );
@@ -159,7 +161,7 @@ tcp_thread_start(void *_args)
 		/*----------------------------------------------------------------* 
 	 	 * Esperar una petición
 	 	 *----------------------------------------------------------------*/
-		printf( "Esperando petición (Padre).\n" );
+		printf( "Esperando petición (TCP).\n" );
 		if ( ( ndescriptor = esperar( args->sock_tcp ) ) < 0 ) {
 			perror("ERROR ESPERANDO: ");
 			exit(-1);
@@ -173,13 +175,11 @@ tcp_thread_start(void *_args)
 		// Implementar un thread con un for que espere conexiones UTP y les asigne un tread
 		pthread_t id;
 		s = pthread_create(&id, NULL,
-							tcp_sub_thread, ndescriptor);
+							tcp_manager_thread, ndescriptor);
 		if (s != 0)
 			handle_error_en(s, "pthread_create");
 		
 	}
-
-	printf("termine con descriptor %d\n\n", descriptor);
 
 	pthread_exit(NULL);
 }
@@ -257,14 +257,14 @@ int inicializar( int puerto ) {
 	//Implementar un thread con un for que espere conexiones UTP y les asigne un tread
 	pthread_t id_udp;
 	s = pthread_create(&id_udp, NULL,
-						udp_thread_start, targs);
+						udp_main_thread, targs);
 	if (s != 0)
 		handle_error_en(s, "pthread_create");
 
 	// Implementar un thread con un for que espere conexiones UDP y les asigne un tread
 	pthread_t id_tcp;
 	s = pthread_create(&id_tcp, NULL,
-						tcp_thread_start, targs);
+						tcp_main_thread, targs);
 	if (s != 0)
 		handle_error_en(s, "pthread_create");
 
@@ -316,17 +316,17 @@ int recibir( int nsockfd, char *msg ) {
 	}
 
 	//char str[80] = "This is - www.tutorialspoint.com - website";
-   	const char s[2] = " ";
-   	char *token;
+//    	const char s[2] = " ";
+//    	char *token;
    
-   	/* get the first token */
- 	token = strtok(msg, s);
+//    	/* get the first token */
+//  	token = strtok(msg, s);
    
-   	/* walk through other tokens */
- 	while( token != NULL ) {
-		printf( " %s\n", token );
-		token = strtok(NULL, s);
-   }
+//    	/* walk through other tokens */
+//  	while( token != NULL ) {
+// 		printf( " %s\n", token );
+// 		token = strtok(NULL, s);
+//    }
    
    //return(0);
 
