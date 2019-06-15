@@ -10,7 +10,3 @@
 
 #define MAXLINEA 100
 #define MAXCLI   10
-
-
-
-
