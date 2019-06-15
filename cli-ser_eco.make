@@ -39,9 +39,9 @@ OBJS_CLI_2 = $(VIA_CLI_2)/cliente.o
 ejemplo-cli-ser-eco: $(OBJS_SRV_1) $(OBJS_SRV_2) $(OBJS_SRV_3) $(OBJS_CLI_1) $(OBJS_CLI_2)
 	cc $(OBJS_SRV_1) -o $(VIA_SRV_1)/servidor
 	cc $(OBJS_SRV_2) -o $(VIA_SRV_2)/servidor
-	cc $(OBJS_SRV_3) -o $(VIA_SRV_3)/Test_servidor
-	cc $(OBJS_CLI_1) -o $(VIA_CLI_1)/cliente
-	cc $(OBJS_CLI_2) -o $(VIA_CLI_2)/cliente
+	cc $(OBJS_SRV_3) -pthread -o $(VIA_SRV_3)/Test_servidor -g
+	cc $(OBJS_CLI_1) -o $(VIA_CLI_1)/cliente -g
+	cc $(OBJS_CLI_2) -o $(VIA_CLI_2)/cliente -g
 	
 # 1.- Servidor de eco iterativo sobre UDP
 servidor.o:	$(VIA_SRV_1)/servidor.c $(VIA_SRV_1)/servidor.h $(VIA_SRV_1)/eco.h
